@@ -17,7 +17,6 @@ class BrandSearcher(Searcher):
     def __init__(self):
         self.proxy_config = ProxyConf(app_key)
         self.json_result = None
-        # self.topic = ''
         self.set_config()
 
     def set_config(self):
