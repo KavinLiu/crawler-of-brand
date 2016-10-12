@@ -6,20 +6,21 @@ from email.utils import formataddr
 import smtplib
 import time
 import requests
+from requests.utils import dict_from_cookiejar
 from brand.ProxyConf import ProxyConf, key1 as app_key
+from brand.QuanWangProxy import get_proxy
+import re
 
+# a = "第  页 共 6573 页 78876 条数据"
+# print len(a)
+# print a[2]
+# print a.replace(" ", '')
+# print re.split('\?+', a)
 
-proxy_config = ProxyConf(app_key)
-headers = dict()
-headers['Proxy-Authorization'] = proxy_config.get_auth_header()
-url = "http://www.pss-system.gov.cn/sipopublicsearch/patentsearch/showAbstractInfo-viewAbstractInfo.shtml"
-params = {'nrdAn': "CN201610522240",
-          'cid': "CN201610522240.720160928FM",
-          'sid': "CN201610522240.720160928FM",
-          'wee.bizlog.modulelevel': "0201101"}
-r = requests.post(url, params=params, headers=headers, proxies=proxy_config.get_proxy())
-r.encoding = 'utf-8'
-print r.text
+# r = session.get("http://1212.ip138.com/ic.asp", headers=headers, proxies=proxy_config.get_proxy())
+# r.encoding = 'gbk'
+# print r.text
+
 
 
 
