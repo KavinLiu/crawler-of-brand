@@ -33,23 +33,23 @@ class BrandSearcher(Searcher):
 
     def submit_search_request(self, name, account_id='null', task_id='null'):
         print u'Searching', name
-        self.json_result = dict()
-        self.json_result["inputCompanyName"] = name
-        self.json_result["account_id"] = account_id
-        self.json_result["task_id"] = task_id
-        self.json_result["brand_details"] = list()
         headers = {"Host": "so.quandashi.com",
                    "Referer": "http://www.quandashi.com/",
                    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
         cookies = dict(YZNAME='e42c0141250d02dad20c86609d5d19d155f12717')
         key_url = urllib.quote(name.encode('utf-8'))
-        # print key_url
         i = 0
-        for page in range(1, 10000):
+        for page in range(1, 100000):
+            self.json_result = dict()
+            self.json_result["inputCompanyName"] = name
+            self.json_result["account_id"] = account_id
+            self.json_result["task_id"] = task_id
+            self.json_result["brand_details"] = list()
             url = "http://so.quandashi.com/index/search?nonce=833330&param=3&styles=&key=" + key_url + "&per-page=10&page=" + str(page)
             r = self.get_request(url, headers, cookies)
             r.encoding = 'utf-8'
             tree = html.fromstring(r.text)
+            brand_num = tree.xpath(".//div[@class='s1']/i")[0].text.replace(',', '')
             result_list = tree.xpath(".//div[4]//li[@class='item']")
             if len(result_list) == 0 and page == 1:
                 print u'No brand result'
@@ -71,20 +71,20 @@ class BrandSearcher(Searcher):
                 values['id'] = i
                 values['rowkey'] = name + "_" + values['apply_time'].replace("-", '') + "_" + values["reg_no"]
                 self.json_result["brand_details"].append(values)
-
             if len(result_list) != 10:
                 print u'Search succeed'
                 break
-        print u'Result to kafka'
-        self.kafka.send(json.dumps(self.json_result, ensure_ascii=False))
-        # print json.dumps(self.json_result, ensure_ascii=False)
+            self.json_result["process"] = i/float(brand_num)
+            print u'Result to kafka'
+            # print i, json.dumps(self.json_result, ensure_ascii=False)
+            self.kafka.send(json.dumps(self.json_result, ensure_ascii=False))
 
     def get_request(self, url, headers, cookies, t=0):
         try:
             headers['Proxy-Authorization'] = self.proxy_config.get_auth_header(lock_id=self.lock_id)
             r = requests.get(url, headers=headers, cookies=cookies, proxies=self.proxy_config.get_proxy(), timeout=15)
             return r
-        except ReadTimeout as e:
+        except Exception as e:
             if t == 10:
                 raise e
             else:
@@ -107,5 +107,5 @@ def get_args():
 if __name__ == '__main__':
     args_dict = get_args()
     searcher = BrandSearcher()
-    # searcher.submit_search_request(u'河南正浩测绘有限公司')
+    # searcher.submit_search_request(u'乐视网信息技术（北京）股份有限公司')
     searcher.submit_search_request(args_dict["companyName"], account_id=args_dict['accountId'], task_id=args_dict['taskId'])
